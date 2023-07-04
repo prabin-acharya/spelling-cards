@@ -12,11 +12,8 @@ function saveWord(word) {
   chrome.runtime.sendMessage(
     { action: "checkSpelling", word: word },
     function (response) {
-      console.log("......");
-      console.log("response", response);
       word = response.word;
-      if (!words.includes(word)) {
-        // Check if the word is already in the array
+      if (word.includes("-") && !words.includes(word)) {
         words.push(word); // Add the word to the array
         chrome.storage.local.set({ words: words }, function () {
           console.log("Word is saved");
