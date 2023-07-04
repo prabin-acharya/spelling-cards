@@ -26,7 +26,7 @@ chrome.storage.local.get("words", function (data) {
 document.getElementById("download").addEventListener("click", function () {
   chrome.storage.local.get(["words"], function (result) {
     let words = result.words;
-    let csv = "Typed Word,Correct Spelling\n";
+    let csv = "";
     words.forEach(function (word) {
       let parts = word.split("-");
       csv += parts[0] + "," + parts[1] + "\n";
