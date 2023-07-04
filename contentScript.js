@@ -2,11 +2,18 @@ console.log("====I am in content script");
 
 let words = [];
 
+chrome.storage.local.get("words", function (data) {
+  words = data.words || [];
+});
+
 function saveWord(word) {
-  words.push(word); // Add the word to the array
-  chrome.storage.local.set({ words: words }, function () {
-    console.log("Word is saved");
-  });
+  if (!words.includes(word)) {
+    // Check if the word is already in the array
+    words.push(word); // Add the word to the array
+    chrome.storage.local.set({ words: words }, function () {
+      console.log("Word is saved");
+    });
+  }
 }
 
 document.body.addEventListener("input", function (e) {
