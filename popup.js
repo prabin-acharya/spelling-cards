@@ -1,25 +1,39 @@
 console.log("This is a popup!");
 
 chrome.storage.local.get("words", function (data) {
-  var wordList = document.getElementById("wordList");
-  data.words.forEach(function (word) {
-    var li = document.createElement("li");
-    li.textContent = word;
+  let wordList = document.getElementById("wordList");
+  data.words.reverse().forEach(function (word) {
+    let li = document.createElement("li");
+
+    let redWord = document.createElement("span");
+    redWord.textContent = word.split("-")[0];
+    redWord.style.color = "red";
+    li.appendChild(redWord);
+
+    let dash = document.createElement("span");
+    dash.textContent = "  -  ";
+    li.appendChild(dash);
+
+    let greenWord = document.createElement("span");
+    greenWord.textContent = word.split("-")[1];
+    greenWord.style.color = "green";
+    li.appendChild(greenWord);
+
     wordList.appendChild(li);
   });
 });
 
 document.getElementById("download").addEventListener("click", function () {
   chrome.storage.local.get(["words"], function (result) {
-    var words = result.words;
-    var csv = "Typed Word,Correct Spelling\n";
+    let words = result.words;
+    let csv = "Typed Word,Correct Spelling\n";
     words.forEach(function (word) {
-      var parts = word.split("-");
+      let parts = word.split("-");
       csv += parts[0] + "," + parts[1] + "\n";
     });
-    var blob = new Blob([csv], { type: "text/csv" });
-    var url = URL.createObjectURL(blob);
-    var link = document.createElement("a");
+    let blob = new Blob([csv], { type: "text/csv" });
+    let url = URL.createObjectURL(blob);
+    let link = document.createElement("a");
     link.href = url;
     link.download = "words.csv";
     link.click();
