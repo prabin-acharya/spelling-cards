@@ -4,9 +4,9 @@ let words = [];
 
 let dictionary = new Typo("en_US");
 
-chrome.storage.local.get("words", function (data) {
-  words = data.words || [];
-});
+// chrome.storage.local.get("words", function (data) {
+//   words = data.words || [];
+// });
 
 function saveWord(word) {
   chrome.runtime.sendMessage(
