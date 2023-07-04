@@ -1,17 +1,10 @@
-// console.log("I am in background script");
-
+console.log("I am in background script");
 importScripts("typo.js");
-// var Typo = require("typo-js");
-
-// let dictionary = new Typo("en_US", {
-//   dictionaryPath: "typo/dictionaries",
-//   affixPath: "typo/dictionaries",
-// });
 
 let affData = null;
 let dicData = null;
 
-fetch(chrome.runtime.getURL("en_US.aff"))
+fetch(chrome.runtime.getURL("./dictionaries/en_US.aff"))
   .then((response) => response.text())
   .then((data) => {
     affData = data;
@@ -21,7 +14,7 @@ fetch(chrome.runtime.getURL("en_US.aff"))
     }
   });
 
-fetch(chrome.runtime.getURL("en_US.dic"))
+fetch(chrome.runtime.getURL("./dictionaries/en_US.dic"))
   .then((response) => response.text())
   .then((data) => {
     dicData = data;
@@ -45,10 +38,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (!dictionary.check(word)) {
       let suggestions = dictionary.suggest(word);
       if (suggestions.length > 0) {
-        word = word + "-" + suggestions[0]; // If the word is misspelled, return it as "originalWord-correctWord"
+        word = word + "-" + suggestions[0]; // If the word is misspelled
       }
     }
     sendResponse({ word: word });
-    // sendResponse({ word: "Helllllloooooooooooooooo" });
   }
 });

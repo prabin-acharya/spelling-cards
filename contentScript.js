@@ -8,33 +8,6 @@ chrome.storage.local.get("words", function (data) {
   words = data.words || [];
 });
 
-// function saveWord(word) {
-//   if (!words.includes(word)) {
-//     // Check if the word is already in the array
-//     words.push(word); // Add the word to the array
-//     chrome.storage.local.set({ words: words }, function () {
-//       console.log("Word is saved");
-//     });
-//   }
-// }
-
-// function saveWord(word) {
-//   if (!words.includes(word)) {
-//     // Check if the word is already in the array
-//     if (!dictionary.check(word)) {
-//       // Check the spelling of the word
-//       var suggestions = dictionary.suggest(word);
-//       if (suggestions.length > 0) {
-//         word = word + "-" + suggestions[0]; // If the word is misspelled, save it as "originalWord-correctWord"
-//       }
-//     }
-//     words.push(word); // Add the word to the array
-//     chrome.storage.local.set({ words: words }, function () {
-//       console.log("Word is saved");
-//     });
-//   }
-// }
-
 function saveWord(word) {
   chrome.runtime.sendMessage(
     { action: "checkSpelling", word: word },
