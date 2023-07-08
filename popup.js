@@ -1,8 +1,18 @@
 console.log("This is a popup!");
 
+const suggestionsCount = 2; //shoudld be less than 4
+
 chrome.storage.local.get("words", function (data) {
+  const allWords = data.words.map((word) =>
+    word
+      .split("-")
+      .slice(0, suggestionsCount + 1)
+      .join("-")
+  );
+
   let wordList = document.getElementById("wordList");
-  data.words.reverse().forEach(function (word) {
+
+  allWords.reverse().forEach(function (word) {
     let li = document.createElement("li");
 
     let redWord = document.createElement("span");
@@ -15,7 +25,7 @@ chrome.storage.local.get("words", function (data) {
     li.appendChild(dash);
 
     let greenWord = document.createElement("span");
-    greenWord.textContent = word.split("-")[1];
+    greenWord.textContent = word.split("-").slice(1).join("  ");
     greenWord.style.color = "green";
     li.appendChild(greenWord);
 
@@ -24,12 +34,18 @@ chrome.storage.local.get("words", function (data) {
 });
 
 document.getElementById("download").addEventListener("click", function () {
-  chrome.storage.local.get(["words"], function (result) {
-    let words = result.words;
+  chrome.storage.local.get(["words"], function (data) {
+    let allWords = data.words;
+
     let csv = "";
-    words.forEach(function (word) {
+
+    allWords.forEach(function (word) {
+      console.log(word);
       let parts = word.split("-");
-      csv += parts[0] + "," + parts[1] + "\n";
+
+      csv += parts[0] + ",";
+
+      csv += parts.slice(1, suggestionsCount + 1).join("  ") + "\n";
     });
     let blob = new Blob([csv], { type: "text/csv" });
     let url = URL.createObjectURL(blob);

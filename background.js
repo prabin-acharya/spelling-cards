@@ -32,15 +32,19 @@ function initTypo() {
 }
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  console.log("======+++++", request);
   if (request.action == "checkSpelling") {
     let word = request.word;
     if (!dictionary.check(word)) {
       let suggestions = dictionary.suggest(word);
+      console.log("suggestions", suggestions);
       if (suggestions.length > 0) {
-        word = word + "-" + suggestions[0]; // If the word is misspelled
+        word = word + "-" + suggestions[0];
+        suggestions.length > 1 && (word = word + "-" + suggestions[1]); // comment it out if you don't want to save the second suggestion
+        suggestions.length > 2 && (word = word + "-" + suggestions[2]); // comment it out if you don't want to save the third suggestion
+        suggestions.length > 3 && (word = word + "-" + suggestions[3]); // comment it out if you don't want to save the fourth suggestion
       }
     }
+
     sendResponse({ word: word });
   }
 });
