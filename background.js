@@ -1,4 +1,3 @@
-console.log("I am in background script");
 importScripts("typo.js");
 
 let affData = null;
@@ -8,7 +7,6 @@ fetch(chrome.runtime.getURL("./dictionaries/en_US.aff"))
   .then((response) => response.text())
   .then((data) => {
     affData = data;
-    // Only initialize Typo after both files have loaded.
     if (dicData) {
       initTypo();
     }
@@ -18,7 +16,6 @@ fetch(chrome.runtime.getURL("./dictionaries/en_US.dic"))
   .then((response) => response.text())
   .then((data) => {
     dicData = data;
-    // Only initialize Typo after both files have loaded.
     if (affData) {
       initTypo();
     }
@@ -34,7 +31,7 @@ function initTypo() {
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action == "checkSpelling") {
     let word = request.word;
-    if (!dictionary.check(word)) {
+    if (dictionary && !dictionary.check(word)) {
       let suggestions = dictionary.suggest(word);
       console.log("suggestions", suggestions);
       if (suggestions.length > 0) {
