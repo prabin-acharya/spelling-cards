@@ -1,40 +1,46 @@
 console.log("This is a popup!");
 
-const suggestionsCount = 2; //shoudld be less than 4
+function renderSavedWords() {
+  chrome.storage.sync.get(["suggestionsCount"], function (data) {
+    const suggestionsCount = data.suggestionsCount + 1;
 
-chrome.storage.local.get("words", function (data) {
-  const allWords = data.words.map((word) =>
-    word
-      .split("-")
-      .slice(0, suggestionsCount + 1)
-      .join("-")
-  );
+    chrome.storage.local.get("words", function (data) {
+      const allWords = data.words.map((word) =>
+        word.split("-").slice(0, suggestionsCount).join("-")
+      );
 
-  let wordList = document.getElementById("wordList");
+      let wordList = document.getElementById("wordList");
 
-  allWords.reverse().forEach(function (word) {
-    let li = document.createElement("li");
+      // Clear the list before adding new items
+      wordList.innerHTML = "";
 
-    let redWord = document.createElement("span");
-    redWord.textContent = word.split("-")[0];
-    redWord.style.color = "red";
-    li.appendChild(redWord);
+      allWords.reverse().forEach(function (word) {
+        let li = document.createElement("li");
 
-    let dash = document.createElement("span");
-    dash.textContent = "  -  ";
-    li.appendChild(dash);
+        let redWord = document.createElement("span");
+        redWord.textContent = word.split("-")[0];
+        redWord.style.color = "red";
+        li.appendChild(redWord);
 
-    let greenWord = document.createElement("span");
-    greenWord.textContent = word.split("-").slice(1).join("  ");
-    greenWord.style.color = "green";
-    li.appendChild(greenWord);
+        let dash = document.createElement("span");
+        dash.textContent = "  -  ";
+        li.appendChild(dash);
 
-    wordList.appendChild(li);
+        let greenWord = document.createElement("span");
+        greenWord.textContent = word.split("-").slice(1).join("  ");
+        greenWord.style.color = "green";
+        li.appendChild(greenWord);
+
+        wordList.appendChild(li);
+      });
+    });
   });
-});
+}
+
+renderSavedWords();
 
 document.getElementById("download").addEventListener("click", function () {
-  chrome.storage.local.get(["words"], function (data) {
+  chrome.storage.sync.get(["words"], function (data) {
     let allWords = data.words;
 
     let csv = "";
@@ -53,5 +59,33 @@ document.getElementById("download").addEventListener("click", function () {
     link.href = url;
     link.download = "words.csv";
     link.click();
+  });
+});
+
+document.getElementById("clearButton").addEventListener("click", function () {
+  chrome.storage.local.set({ words: [] }, function () {
+    console.log("words cleared");
+  });
+});
+
+let suggestionsCountRadios = document.querySelectorAll(
+  'input[type=radio][name="suggestion"]'
+);
+
+function handleChange(event) {
+  chrome.storage.sync.set({ suggestionsCount: Number(event.target.value) });
+
+  renderSavedWords();
+}
+
+suggestionsCountRadios.forEach((radio) =>
+  radio.addEventListener("change", handleChange)
+);
+
+chrome.storage.sync.get(["suggestionsCount"], function (data) {
+  suggestionsCountRadios.forEach((radio) => {
+    if (radio.value == data.suggestionsCount) {
+      radio.checked = true;
+    }
   });
 });
