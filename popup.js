@@ -1,5 +1,20 @@
 console.log("This is a popup!");
 
+renderSavedWords();
+
+document.getElementById("download").addEventListener("click", function () {
+  donwloadAsCsv();
+});
+
+document.getElementById("clearButton").addEventListener("click", function () {
+  let confirmation = confirm("Are you sure you want to clear all saved words?");
+
+  if (confirmation) {
+    deleteAllSavedWords();
+    renderSavedWords();
+  }
+});
+
 function renderSavedWords() {
   chrome.storage.sync.get(["suggestionsCount"], function (data) {
     const suggestionsCount = data.suggestionsCount + 1;
@@ -37,9 +52,7 @@ function renderSavedWords() {
   });
 }
 
-renderSavedWords();
-
-document.getElementById("download").addEventListener("click", function () {
+function donwloadAsCsv() {
   chrome.storage.sync.get(["words"], function (data) {
     let allWords = data.words;
 
@@ -60,7 +73,7 @@ document.getElementById("download").addEventListener("click", function () {
     link.download = "words.csv";
     link.click();
   });
-});
+}
 
 function deleteAllSavedWords() {
   chrome.storage.local.set({ words: [] }, function () {
@@ -68,28 +81,19 @@ function deleteAllSavedWords() {
   });
 }
 
-document.getElementById("clearButton").addEventListener("click", function () {
-  let confirmation = confirm("Are you sure you want to clear all saved words?");
-
-  if (confirmation) {
-    deleteAllSavedWords();
-    renderSavedWords();
-  }
-});
-
 let suggestionsCountRadios = document.querySelectorAll(
   'input[type=radio][name="suggestion"]'
 );
 
-function handleChange(event) {
+suggestionsCountRadios.forEach((radio) =>
+  radio.addEventListener("change", handleChangeSuggestionCount)
+);
+
+function handleChangeSuggestionCount(event) {
   chrome.storage.sync.set({ suggestionsCount: Number(event.target.value) });
 
   renderSavedWords();
 }
-
-suggestionsCountRadios.forEach((radio) =>
-  radio.addEventListener("change", handleChange)
-);
 
 chrome.storage.sync.get(["suggestionsCount"], function (data) {
   suggestionsCountRadios.forEach((radio) => {
