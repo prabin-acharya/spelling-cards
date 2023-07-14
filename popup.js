@@ -62,10 +62,19 @@ document.getElementById("download").addEventListener("click", function () {
   });
 });
 
-document.getElementById("clearButton").addEventListener("click", function () {
+function deleteAllSavedWords() {
   chrome.storage.local.set({ words: [] }, function () {
     console.log("words cleared");
   });
+}
+
+document.getElementById("clearButton").addEventListener("click", function () {
+  let confirmation = confirm("Are you sure you want to clear all saved words?");
+
+  if (confirmation) {
+    deleteAllSavedWords();
+    renderSavedWords();
+  }
 });
 
 let suggestionsCountRadios = document.querySelectorAll(
