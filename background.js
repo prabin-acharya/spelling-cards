@@ -1,47 +1,36 @@
 importScripts("typo.js");
 
-let affData = null;
-let dicData = null;
-
-fetch(chrome.runtime.getURL("./dictionaries/en_US.aff"))
-  .then((response) => response.text())
-  .then((data) => {
-    affData = data;
-    if (dicData) {
-      initTypo();
-    }
-  });
-
-fetch(chrome.runtime.getURL("./dictionaries/en_US.dic"))
-  .then((response) => response.text())
-  .then((data) => {
-    dicData = data;
-    if (affData) {
-      initTypo();
-    }
-  });
+Promise.all([
+  fetch(chrome.runtime.getURL("./dictionaries/en_US.aff")).then((response) =>
+    response.text()
+  ),
+  fetch(chrome.runtime.getURL("./dictionaries/en_US.dic")).then((response) =>
+    response.text()
+  ),
+]).then(([affData, dicData]) => {
+  dictionary = new Typo("en_US", affData, dicData);
+  console.log("dictionary", dictionary);
+});
 
 let dictionary = null;
 
-function initTypo() {
-  dictionary = new Typo("en_US", affData, dicData);
-  console.log("dictionary", dictionary);
-}
-
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action == "checkSpelling") {
-    let word = request.word;
-    if (dictionary && !dictionary.check(word)) {
-      let suggestions = dictionary.suggest(word);
-      console.log("suggestions", suggestions);
+    let originalWord = request.word;
+    let wordWithSuggestions = originalWord; // we are saving words as array of "word-suggestion1-suggestion2"
+
+    if (dictionary && !dictionary.check(originalWord)) {
+      let suggestions = dictionary
+        .suggest(originalWord)
+        .map((suggestion) => suggestion.toLowerCase())
+        .filter((suggestion) => suggestion !== originalWord);
+
       if (suggestions.length > 0) {
-        word = word + "-" + suggestions[0];
-        suggestions.length > 1 && (word = word + "-" + suggestions[1]); // comment it out if you don't want to save the second suggestion
-        suggestions.length > 2 && (word = word + "-" + suggestions[2]); // comment it out if you don't want to save the third suggestion
-        suggestions.length > 3 && (word = word + "-" + suggestions[3]); // comment it out if you don't want to save the fourth suggestion
+        wordWithSuggestions =
+          originalWord + "-" + suggestions.slice(0, 4).join("-");
       }
     }
 
-    sendResponse({ word: word });
+    sendResponse({ word: wordWithSuggestions });
   }
 });
