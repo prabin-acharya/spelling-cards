@@ -12,10 +12,8 @@ function saveWord(word) {
     function (response) {
       word = response.word;
       if (word.includes("-") && !words.includes(word)) {
-        words.push(word); // Add the word to the array
-        chrome.storage.local.set({ words: words }, function () {
-          console.log("Word is saved");
-        });
+        words.push(word);
+        chrome.storage.local.set({ words: words }, function () {});
       }
     }
   );

@@ -1,3 +1,7 @@
+chrome.runtime.onInstalled.addListener(function () {
+  chrome.storage.local.set({ suggestionsCount: 2 }, function () {});
+});
+
 importScripts("typo.js");
 
 Promise.all([
@@ -9,7 +13,6 @@ Promise.all([
   ),
 ]).then(([affData, dicData]) => {
   dictionary = new Typo("en_US", affData, dicData);
-  console.log("dictionary", dictionary);
 });
 
 let dictionary = null;

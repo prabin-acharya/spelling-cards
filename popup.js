@@ -1,8 +1,8 @@
-console.log("This is a popup!");
-
 renderSavedWords();
 
-document.getElementById("download").addEventListener("click", donwloadAsCsv());
+document.getElementById("download").addEventListener("click", function () {
+  donwloadAsCsv();
+});
 
 document.getElementById("clearButton").addEventListener("click", function () {
   let confirmation = confirm("Are you sure you want to clear all saved words?");
@@ -15,7 +15,7 @@ document.getElementById("clearButton").addEventListener("click", function () {
 
 function renderSavedWords() {
   chrome.storage.local.get(["suggestionsCount"], function (data) {
-    const suggestionsCount = data.suggestionsCount + 1;
+    const suggestionsCount = data.suggestionsCount + 1 || 2;
 
     chrome.storage.local.get("words", function (data) {
       if (chrome.runtime.lastError) {
@@ -56,23 +56,23 @@ function renderSavedWords() {
 }
 
 function donwloadAsCsv() {
-  chrome.storage.local.get(["words"], function (data) {
+  chrome.storage.local.get(["words", "suggestionsCount"], function (data) {
     if (chrome.runtime.lastError) {
       console.error(chrome.runtime.lastError);
       return;
     }
 
     let allWords = data.words;
+    const suggestionsCount = data.suggestionsCount + 1 || 2;
 
     let csv = "";
 
     allWords.forEach(function (word) {
-      console.log(word);
       let parts = word.split("-");
 
       csv += parts[0] + ",";
 
-      csv += parts.slice(1, suggestionsCount + 1).join("  ") + "\n";
+      csv += parts.slice(1, suggestionsCount).join("  ") + "\n";
     });
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
