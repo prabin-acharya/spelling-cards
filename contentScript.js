@@ -51,17 +51,19 @@ document.body.addEventListener("keyup", function (e) {
   }
 });
 
-// special case for google docs
 if (window.location.hostname === "docs.google.com") {
-  const iframe = document.querySelector("iframe.docs-texteventtarget-iframe");
+  const iframes = document.querySelectorAll("iframe");
 
-  if (iframe) {
+  iframes.forEach((iframe, index) => {
     try {
       iframe.contentWindow.addEventListener("keydown", function (e) {
         console.log("Key pressed:", e.key);
       });
     } catch (error) {
-      console.error("Failed to attach event listener:", error);
+      console.error(
+        `Failed to attach event listener to iframe at index ${index}:`,
+        error
+      );
     }
-  }
+  });
 }
