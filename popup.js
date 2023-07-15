@@ -2,9 +2,7 @@ console.log("This is a popup!");
 
 renderSavedWords();
 
-document.getElementById("download").addEventListener("click", function () {
-  donwloadAsCsv();
-});
+document.getElementById("download").addEventListener("click", donwloadAsCsv());
 
 document.getElementById("clearButton").addEventListener("click", function () {
   let confirmation = confirm("Are you sure you want to clear all saved words?");
@@ -16,10 +14,15 @@ document.getElementById("clearButton").addEventListener("click", function () {
 });
 
 function renderSavedWords() {
-  chrome.storage.sync.get(["suggestionsCount"], function (data) {
+  chrome.storage.local.get(["suggestionsCount"], function (data) {
     const suggestionsCount = data.suggestionsCount + 1;
 
     chrome.storage.local.get("words", function (data) {
+      if (chrome.runtime.lastError) {
+        console.error(chrome.runtime.lastError);
+        return;
+      }
+
       const allWords = data.words.map((word) =>
         word.split("-").slice(0, suggestionsCount).join("-")
       );
@@ -30,18 +33,18 @@ function renderSavedWords() {
       wordList.innerHTML = "";
 
       allWords.reverse().forEach(function (word) {
-        let li = document.createElement("li");
+        const li = document.createElement("li");
 
-        let redWord = document.createElement("span");
+        const redWord = document.createElement("span");
         redWord.textContent = word.split("-")[0];
         redWord.style.color = "red";
         li.appendChild(redWord);
 
-        let dash = document.createElement("span");
+        const dash = document.createElement("span");
         dash.textContent = "  -  ";
         li.appendChild(dash);
 
-        let greenWord = document.createElement("span");
+        const greenWord = document.createElement("span");
         greenWord.textContent = word.split("-").slice(1).join("  ");
         greenWord.style.color = "green";
         li.appendChild(greenWord);
@@ -53,7 +56,12 @@ function renderSavedWords() {
 }
 
 function donwloadAsCsv() {
-  chrome.storage.sync.get(["words"], function (data) {
+  chrome.storage.local.get(["words"], function (data) {
+    if (chrome.runtime.lastError) {
+      console.error(chrome.runtime.lastError);
+      return;
+    }
+
     let allWords = data.words;
 
     let csv = "";
@@ -66,9 +74,9 @@ function donwloadAsCsv() {
 
       csv += parts.slice(1, suggestionsCount + 1).join("  ") + "\n";
     });
-    let blob = new Blob([csv], { type: "text/csv" });
-    let url = URL.createObjectURL(blob);
-    let link = document.createElement("a");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
     link.href = url;
     link.download = "words.csv";
     link.click();
@@ -90,12 +98,17 @@ suggestionsCountRadios.forEach((radio) =>
 );
 
 function handleChangeSuggestionCount(event) {
-  chrome.storage.sync.set({ suggestionsCount: Number(event.target.value) });
+  chrome.storage.local.set({ suggestionsCount: Number(event.target.value) });
 
   renderSavedWords();
 }
 
-chrome.storage.sync.get(["suggestionsCount"], function (data) {
+chrome.storage.local.get(["suggestionsCount"], function (data) {
+  if (chrome.runtime.lastError) {
+    console.error(chrome.runtime.lastError);
+    return;
+  }
+
   suggestionsCountRadios.forEach((radio) => {
     if (radio.value == data.suggestionsCount) {
       radio.checked = true;
