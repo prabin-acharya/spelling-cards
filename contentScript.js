@@ -57,7 +57,7 @@ if (window.location.hostname === "docs.google.com") {
   iframes.forEach((iframe, index) => {
     try {
       iframe.contentWindow.addEventListener("keydown", function (e) {
-        console.log("Key pressed:", e.key);
+        trackWord(e.key);
       });
     } catch (error) {
       console.error(
@@ -66,4 +66,23 @@ if (window.location.hostname === "docs.google.com") {
       );
     }
   });
+}
+
+let currentWord = "";
+
+function trackWord(key) {
+  if (/^[a-z]$/.test(key) || ["Enter", " "].includes(key)) {
+    if (key === " " || key === "\n" || key === "Enter") {
+      saveCurrentWord();
+      currentWord = "";
+    } else {
+      currentWord += key;
+    }
+  }
+
+  function saveCurrentWord() {
+    if (currentWord.length > 3) {
+      saveWord(currentWord);
+    }
+  }
 }
