@@ -71,10 +71,12 @@ if (window.location.hostname === "docs.google.com") {
 let currentWord = "";
 
 function trackWord(key) {
-  if (/^[a-z]$/.test(key) || ["Enter", " "].includes(key)) {
+  if (/^[a-z]$/.test(key) || ["Enter", " ", "Backspace"].includes(key)) {
     if (key === " " || key === "\n" || key === "Enter") {
       saveCurrentWord();
       currentWord = "";
+    } else if (key === "Backspace") {
+      currentWord = currentWord.slice(0, -1);
     } else {
       currentWord += key;
     }
@@ -82,6 +84,7 @@ function trackWord(key) {
 
   function saveCurrentWord() {
     if (currentWord.length > 3) {
+      console.log("Saving word:", currentWord);
       saveWord(currentWord);
     }
   }
