@@ -1,5 +1,5 @@
 chrome.runtime.onInstalled.addListener(function () {
-  chrome.storage.local.set({ suggestionsCount: 2 }, function () {});
+  chrome.storage.local.set({ suggestionsCount: 1 }, function () {});
 });
 
 importScripts("typo.js");

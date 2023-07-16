@@ -40,6 +40,10 @@ function renderSavedWords() {
         return;
       }
 
+      if (!data.words || data?.words?.length == 0) {
+        return;
+      }
+
       const allWords = data.words?.map((word) =>
         word.split("-").slice(0, suggestionsCount).join("-")
       );

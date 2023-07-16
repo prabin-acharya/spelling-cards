@@ -1,12 +1,11 @@
 let dictionary = new Typo("en_US");
 
-let words = [];
-
-chrome.storage.local.get("words", function (data) {
-  words = data.words || [];
-});
-
 function saveWord(word) {
+  let words = [];
+  chrome.storage.local.get("words", function (data) {
+    words = data.words || [];
+  });
+
   chrome.runtime.sendMessage(
     { action: "checkSpelling", word: word },
     function (response) {
@@ -44,7 +43,7 @@ document.body.addEventListener("keyup", function (e) {
       // Save the last word when the user types a space or a new line
       let inputWords = inputValue.trim().split(/\s+/);
       let lastWord = inputWords[inputWords.length - 1];
-      saveWord(lastWord);
+      if (lastWord.length > 3) saveWord(lastWord);
     }
   }
 });
@@ -82,7 +81,6 @@ function trackWord(key) {
 
   function saveCurrentWord() {
     if (currentWord.length > 3) {
-      console.log("Saving word:", currentWord);
       saveWord(currentWord);
     }
   }

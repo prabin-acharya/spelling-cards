@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Spelling Cards",
-  "description": "A Spell Checker for the Web",
+  "description": "Track Spelling  Errors",
   "version": "1.0",
   "icons": {
     "16": "pencil.png",
@@ -21,11 +21,5 @@
       "js": ["typo.js", "contentScript.js"]
     }
   ],
-  "permissions": ["activeTab", "storage", "scripting"],
-  "web_accessible_resources": [
-    {
-      "resources": ["typo.js"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  "permissions": ["activeTab", "storage", "scripting"]
 }
