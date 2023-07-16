@@ -1,8 +1,23 @@
 renderSavedWords();
 
-document.getElementById("download").addEventListener("click", function () {
-  donwloadAsCsv();
+// get words from storage
+chrome.storage.local.get("words", function (data) {
+  const words = data.words || [];
+
+  if (words.length === 0) {
+    document.getElementById("container").style.display = "none";
+    document.getElementById("emptyContainer").style.display = "block";
+  } else {
+    document.getElementById("container").style.display = "block";
+    document.getElementById("emptyContainer").style.display = "none";
+  }
 });
+
+document
+  .getElementById("downloadButton")
+  .addEventListener("click", function () {
+    donwloadAsCsv();
+  });
 
 document.getElementById("clearButton").addEventListener("click", function () {
   let confirmation = confirm("Are you sure you want to clear all saved words?");
@@ -10,6 +25,8 @@ document.getElementById("clearButton").addEventListener("click", function () {
   if (confirmation) {
     deleteAllSavedWords();
     renderSavedWords();
+    document.getElementById("container").style.display = "none";
+    document.getElementById("emptyContainer").style.display = "block";
   }
 });
 
@@ -23,7 +40,7 @@ function renderSavedWords() {
         return;
       }
 
-      const allWords = data.words.map((word) =>
+      const allWords = data.words?.map((word) =>
         word.split("-").slice(0, suggestionsCount).join("-")
       );
 
@@ -86,6 +103,9 @@ function donwloadAsCsv() {
 function deleteAllSavedWords() {
   chrome.storage.local.set({ words: [] }, function () {
     console.log("words cleared");
+  });
+  chrome.storage.local.get("words", function (data) {
+    console.log(data.words, "=====");
   });
 }
 
