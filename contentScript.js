@@ -1,21 +1,22 @@
 let dictionary = new Typo("en_US");
 
 function saveWord(word) {
-  let words = [];
   chrome.storage.local.get("words", function (data) {
-    words = data.words || [];
-  });
+    let words = data.words || [];
 
-  chrome.runtime.sendMessage(
-    { action: "checkSpelling", word: word },
-    function (response) {
-      word = response.word;
-      if (word.includes("-") && !words.includes(word)) {
-        words.push(word);
-        chrome.storage.local.set({ words: words }, function () {});
+    chrome.runtime.sendMessage(
+      { action: "checkSpelling", word: word },
+      function (response) {
+        word = response.word;
+
+        // save the word oif it's not already saved, "-" is because we are saving words as array of "word-suggestion1-suggestion2"
+        if (word.includes("-") && !words.includes(word)) {
+          words.push(word);
+          chrome.storage.local.set({ words: words });
+        }
       }
-    }
-  );
+    );
+  });
 }
 
 document.body.addEventListener("keyup", function (e) {
@@ -23,17 +24,10 @@ document.body.addEventListener("keyup", function (e) {
   let inputValue = null;
 
   if (
-    activeElement.tagName.toLowerCase() === "input" ||
-    activeElement.tagName.toLowerCase() === "textarea"
+    ["input", "textarea"].includes(activeElement.tagName.toLowerCase()) &&
+    !["password", "email", "number"].includes(activeElement.type)
   ) {
-    const inputType = activeElement.type;
-    if (
-      inputType !== "password" &&
-      inputType !== "email" &&
-      inputType !== "number"
-    ) {
-      inputValue = activeElement.value;
-    }
+    inputValue = activeElement.value;
   } else if (activeElement.isContentEditable) {
     inputValue = activeElement.textContent;
   }
@@ -50,10 +44,10 @@ document.body.addEventListener("keyup", function (e) {
   }
 });
 
+// special case for google docs
 if (window.location.hostname === "docs.google.com") {
-  const iframes = document.querySelectorAll("iframe");
-
-  iframes.forEach((iframe, index) => {
+  // Add an event listener to each iframe to track keydown events
+  document.querySelectorAll("iframe").forEach((iframe, index) => {
     try {
       iframe.contentWindow.addEventListener("keydown", function (e) {
         trackWord(e.key);
@@ -69,6 +63,7 @@ if (window.location.hostname === "docs.google.com") {
 
 let currentWord = "";
 
+//  track words typed by the user in google docs(track each letters typed and save the word when the user types a space or a new line)
 function trackWord(key) {
   if (/^[a-z]$/.test(key) || ["Enter", " ", "Backspace"].includes(key)) {
     if (key === " " || key === "\n" || key === "Enter") {
