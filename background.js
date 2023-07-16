@@ -1,9 +1,12 @@
-chrome.runtime.onInstalled.addListener(function () {
-  chrome.storage.local.set({ suggestionsCount: 1 }, function () {});
-});
-
 importScripts("typo.js");
 
+let dictionary = null;
+
+chrome.runtime.onInstalled.addListener(function () {
+  chrome.storage.local.set({ suggestionsCount: 1 });
+});
+
+// Load the dictionary data from the aff and dic files
 Promise.all([
   fetch(chrome.runtime.getURL("./dictionaries/en_US.aff")).then((response) =>
     response.text()
@@ -14,8 +17,6 @@ Promise.all([
 ]).then(([affData, dicData]) => {
   dictionary = new Typo("en_US", affData, dicData);
 });
-
-let dictionary = null;
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action == "checkSpelling") {

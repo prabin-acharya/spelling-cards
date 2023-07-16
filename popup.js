@@ -1,6 +1,6 @@
 renderSavedWords();
 
-// get words from storage
+// if no words saved, show the emopty container + message
 chrome.storage.local.get("words", function (data) {
   const words = data.words || [];
 
@@ -10,23 +10,6 @@ chrome.storage.local.get("words", function (data) {
   } else {
     document.getElementById("container").style.display = "block";
     document.getElementById("emptyContainer").style.display = "none";
-  }
-});
-
-document
-  .getElementById("downloadButton")
-  .addEventListener("click", function () {
-    donwloadAsCsv();
-  });
-
-document.getElementById("clearButton").addEventListener("click", function () {
-  let confirmation = confirm("Are you sure you want to clear all saved words?");
-
-  if (confirmation) {
-    deleteAllSavedWords();
-    renderSavedWords();
-    document.getElementById("container").style.display = "none";
-    document.getElementById("emptyContainer").style.display = "block";
   }
 });
 
@@ -76,6 +59,49 @@ function renderSavedWords() {
   });
 }
 
+// Add event listeners to the buttons(download and delete)
+document
+  .getElementById("downloadButton")
+  .addEventListener("click", function () {
+    donwloadAsCsv();
+  });
+
+document.getElementById("clearButton").addEventListener("click", function () {
+  if (confirm("Are you sure you want to clear all saved words?")) {
+    deleteAllSavedWords();
+    renderSavedWords();
+
+    document.getElementById("container").style.display = "none";
+    document.getElementById("emptyContainer").style.display = "block";
+  }
+});
+
+// Add event listeners to the suggestion count radios
+let suggestionsCountRadios = document.querySelectorAll(
+  'input[type=radio][name="suggestion"]'
+);
+suggestionsCountRadios.forEach((radio) =>
+  radio.addEventListener("change", handleChangeSuggestionCount)
+);
+
+// Set the initial state of the suggestion count radios
+chrome.storage.local.get(["suggestionsCount"], function (data) {
+  suggestionsCountRadios.forEach((radio) => {
+    if (radio.value == data.suggestionsCount) {
+      radio.checked = true;
+    }
+  });
+});
+
+function handleChangeSuggestionCount(event) {
+  chrome.storage.local.set(
+    { suggestionsCount: Number(event.target.value) },
+    function () {
+      renderSavedWords();
+    }
+  );
+}
+
 function donwloadAsCsv() {
   chrome.storage.local.get(["words", "suggestionsCount"], function (data) {
     if (chrome.runtime.lastError) {
@@ -95,6 +121,7 @@ function donwloadAsCsv() {
 
       csv += parts.slice(1, suggestionsCount).join("  ") + "\n";
     });
+
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -108,34 +135,4 @@ function deleteAllSavedWords() {
   chrome.storage.local.set({ words: [] }, function () {
     console.log("words cleared");
   });
-  chrome.storage.local.get("words", function (data) {
-    console.log(data.words, "=====");
-  });
 }
-
-let suggestionsCountRadios = document.querySelectorAll(
-  'input[type=radio][name="suggestion"]'
-);
-
-suggestionsCountRadios.forEach((radio) =>
-  radio.addEventListener("change", handleChangeSuggestionCount)
-);
-
-function handleChangeSuggestionCount(event) {
-  chrome.storage.local.set({ suggestionsCount: Number(event.target.value) });
-
-  renderSavedWords();
-}
-
-chrome.storage.local.get(["suggestionsCount"], function (data) {
-  if (chrome.runtime.lastError) {
-    console.error(chrome.runtime.lastError);
-    return;
-  }
-
-  suggestionsCountRadios.forEach((radio) => {
-    if (radio.value == data.suggestionsCount) {
-      radio.checked = true;
-    }
-  });
-});
