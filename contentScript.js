@@ -41,8 +41,10 @@ document.body.addEventListener("keyup", function (e) {
   if (inputValue) {
     if (inputValue.endsWith(" ") || inputValue.endsWith("\n")) {
       // Save the last word when the user types a space or a new line
-      let inputWords = inputValue.trim().split(/\s+/);
-      let lastWord = inputWords[inputWords.length - 1];
+      let inputWords = inputValue.trim().split(/[\s,!.?]+/);
+      inputWords = inputWords.filter((word) => word.length > 0);
+
+      const lastWord = inputWords[inputWords.length - 1];
       if (lastWord.length > 3) saveWord(lastWord);
     }
   }
