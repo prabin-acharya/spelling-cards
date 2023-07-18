@@ -45,11 +45,11 @@ document.body.addEventListener("keyup", function (e) {
 });
 
 // special case for google docs
-if (window.location.hostname === "docs.google.com") {
+if (window.location.hostname == "docs.google.com") {
   // Add an event listener to each iframe to track keydown events
   document.querySelectorAll("iframe").forEach((iframe, index) => {
     try {
-      iframe.contentWindow.addEventListener("keydown", function (e) {
+      iframe.contentWindow.addEventListener("keyup", function (e) {
         trackWord(e.key);
       });
     } catch (error) {
@@ -82,3 +82,29 @@ function trackWord(key) {
     }
   }
 }
+
+if (window.location.hostname == "mail.google.com") {
+  const activeElement = document.activeElement;
+
+  observer.observe(activeElement, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
+}
+
+// track words typed by the user in contenteditable elements
+let observer = new MutationObserver(function (mutations) {
+  mutations.forEach(function (mutation) {
+    if (mutation.type === "characterData") {
+      let inputWords = mutation.target.textContent.trim().split(/[\s,!.?]+/);
+      inputWords = inputWords.filter((word) => word.length > 0);
+
+      const lastWord = inputWords[inputWords.length - 2];
+      if (lastWord?.length > 3) {
+        console.log("last word:", lastWord);
+        saveWord(lastWord);
+      }
+    }
+  });
+});
