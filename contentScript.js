@@ -83,16 +83,6 @@ function trackWord(key) {
   }
 }
 
-if (window.location.hostname == "mail.google.com") {
-  const activeElement = document.activeElement;
-
-  observer.observe(activeElement, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-  });
-}
-
 // track words typed by the user in contenteditable elements
 let observer = new MutationObserver(function (mutations) {
   mutations.forEach(function (mutation) {
@@ -108,3 +98,13 @@ let observer = new MutationObserver(function (mutations) {
     }
   });
 });
+
+if (window.location.hostname == "mail.google.com") {
+  const activeElement = document.activeElement;
+
+  observer.observe(activeElement, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
+}
