@@ -1,9 +1,61 @@
-renderSavedWords();
+async function fetchFromStorage(keys) {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get(keys, function (data) {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(data);
+      }
+    });
+  });
+}
 
-// if no words saved, show the emopty container + message
-chrome.storage.local.get("words", function (data) {
-  const words = data.words || [];
+async function renderSavedWords() {
+  try {
+    const { words, suggestionsCount = 1 } = await fetchFromStorage([
+      "words",
+      "suggestionsCount",
+    ]);
 
+    if (!words || words.length == 0) {
+      return;
+    }
+
+    const allWords = words.map((word) =>
+      word
+        .split("-")
+        .slice(0, suggestionsCount + 1)
+        .join("-")
+    );
+
+    let wordList = document.getElementById("wordList");
+    wordList.innerHTML = "";
+
+    allWords.reverse().forEach(function (word) {
+      const li = document.createElement("li");
+
+      const redWord = document.createElement("span");
+      redWord.textContent = word.split("-")[0];
+      redWord.style.color = "red";
+      li.appendChild(redWord);
+
+      const dash = document.createElement("span");
+      dash.textContent = "  -  ";
+      li.appendChild(dash);
+
+      const greenWord = document.createElement("span");
+      greenWord.textContent = word.split("-").slice(1).join("  ");
+      greenWord.style.color = "green";
+      li.appendChild(greenWord);
+
+      wordList.appendChild(li);
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+function showHideContainers(words) {
   if (words.length === 0) {
     document.getElementById("container").style.display = "none";
     document.getElementById("emptyContainer").style.display = "block";
@@ -11,72 +63,22 @@ chrome.storage.local.get("words", function (data) {
     document.getElementById("container").style.display = "block";
     document.getElementById("emptyContainer").style.display = "none";
   }
-});
-
-function renderSavedWords() {
-  chrome.storage.local.get(["suggestionsCount"], function (data) {
-    const suggestionsCount = data.suggestionsCount + 1 || 2;
-
-    chrome.storage.local.get("words", function (data) {
-      if (chrome.runtime.lastError) {
-        console.error(chrome.runtime.lastError);
-        return;
-      }
-
-      if (!data.words || data?.words?.length == 0) {
-        return;
-      }
-
-      const allWords = data.words?.map((word) =>
-        word.split("-").slice(0, suggestionsCount).join("-")
-      );
-
-      let wordList = document.getElementById("wordList");
-
-      // Clear the list before adding new items
-      wordList.innerHTML = "";
-
-      allWords.reverse().forEach(function (word) {
-        const li = document.createElement("li");
-
-        const redWord = document.createElement("span");
-        redWord.textContent = word.split("-")[0];
-        redWord.style.color = "red";
-        li.appendChild(redWord);
-
-        const dash = document.createElement("span");
-        dash.textContent = "  -  ";
-        li.appendChild(dash);
-
-        const greenWord = document.createElement("span");
-        greenWord.textContent = word.split("-").slice(1).join("  ");
-        greenWord.style.color = "green";
-        li.appendChild(greenWord);
-
-        wordList.appendChild(li);
-      });
-    });
-  });
 }
 
-// Add event listeners to the buttons(download and delete)
 document
   .getElementById("downloadButton")
   .addEventListener("click", function () {
-    donwloadAsCsv();
+    downloadAsCsv();
   });
 
 document.getElementById("clearButton").addEventListener("click", function () {
   if (confirm("Are you sure you want to clear all saved words?")) {
     deleteAllSavedWords();
     renderSavedWords();
-
-    document.getElementById("container").style.display = "none";
-    document.getElementById("emptyContainer").style.display = "block";
+    showHideContainers([]);
   }
 });
 
-// Add event listeners to the suggestion count radios
 let suggestionsCountRadios = document.querySelectorAll(
   'input[type=radio][name="suggestion"]'
 );
@@ -84,14 +86,28 @@ suggestionsCountRadios.forEach((radio) =>
   radio.addEventListener("change", handleChangeSuggestionCount)
 );
 
-// Set the initial state of the suggestion count radios
-chrome.storage.local.get(["suggestionsCount"], function (data) {
-  suggestionsCountRadios.forEach((radio) => {
-    if (radio.value == data.suggestionsCount) {
-      radio.checked = true;
-    }
-  });
-});
+async function initialize() {
+  try {
+    const { words = [], suggestionsCount } = await fetchFromStorage([
+      "words",
+      "suggestionsCount",
+    ]);
+
+    showHideContainers(words);
+
+    suggestionsCountRadios.forEach((radio) => {
+      if (radio.value == suggestionsCount) {
+        radio.checked = true;
+      }
+    });
+
+    renderSavedWords();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+initialize();
 
 function handleChangeSuggestionCount(event) {
   chrome.storage.local.set(
@@ -102,33 +118,24 @@ function handleChangeSuggestionCount(event) {
   );
 }
 
-function donwloadAsCsv() {
-  chrome.storage.local.get(["words", "suggestionsCount"], function (data) {
-    if (chrome.runtime.lastError) {
-      console.error(chrome.runtime.lastError);
-      return;
-    }
+function downloadAsCsv() {
+  fetchFromStorage(["words", "suggestionsCount"])
+    .then(({ words, suggestionsCount = 1 }) => {
+      let csv = "";
+      words.forEach(function (word) {
+        let parts = word.split("-");
+        csv += parts[0] + ",";
+        csv += parts.slice(1, suggestionsCount + 1).join("  ") + "\n";
+      });
 
-    let allWords = data.words;
-    const suggestionsCount = data.suggestionsCount + 1 || 2;
-
-    let csv = "";
-
-    allWords.forEach(function (word) {
-      let parts = word.split("-");
-
-      csv += parts[0] + ",";
-
-      csv += parts.slice(1, suggestionsCount).join("  ") + "\n";
-    });
-
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "words.csv";
-    link.click();
-  });
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "words.csv";
+      link.click();
+    })
+    .catch(console.error);
 }
 
 function deleteAllSavedWords() {

@@ -1,27 +1,38 @@
-let dictionary = new Typo("en_US");
+const dictionary = new Typo("en_US");
+
+let savedWords = [];
+chrome.storage.local.get("words", function (data) {
+  savedWords = data.words || [];
+});
+
+chrome.storage.onChanged.addListener(function (changes) {
+  for (let key in changes) {
+    if (key === "words") {
+      let storageChange = changes[key];
+      savedWords = storageChange.newValue || [];
+    }
+  }
+});
 
 function saveWord(word) {
-  chrome.storage.local.get("words", function (data) {
-    let words = data.words || [];
+  // send the word to background for spell check
+  chrome.runtime.sendMessage(
+    { action: "checkSpelling", word: word },
+    function (response) {
+      word = response.word;
 
-    // send the word to background for spell check
-    chrome.runtime.sendMessage(
-      { action: "checkSpelling", word: word },
-      function (response) {
-        word = response.word;
-
-        // save the word only if it's not already saved, "-" is because we are saving words as array of "word-suggestion1-suggestion2"
-        if (word.includes("-") && !words.includes(word)) {
-          words.push(word);
-          chrome.storage.local.set({ words: words });
-        }
+      // save the word only if it's not already saved, "-" is because we are saving words as array of "word-suggestion1-suggestion2"
+      if (word.includes("-") && !savedWords.includes(word)) {
+        savedWords.push(word);
+        chrome.storage.local.set({ words: savedWords });
       }
-    );
-  });
+    }
+  );
+  // });
 }
 
 document.body.addEventListener("input", function (e) {
-  let inputValue = null;
+  let userInputValue = null;
 
   if (
     (e.target.tagName === "INPUT" ||
@@ -30,22 +41,21 @@ document.body.addEventListener("input", function (e) {
     !["password", "email", "number"].includes(e.target.type)
   ) {
     if (e.target.isContentEditable) {
-      inputValue = e.target.innerText;
+      userInputValue = e.target.innerText;
     } else {
-      inputValue = e.target.value;
+      userInputValue = e.target.value;
     }
   }
 
-  if (inputValue) {
-    let inputWords = inputValue.trim().split(/[\s,!.?]+/);
-    inputWords = inputWords.filter((word) => word.length > 0);
+  if (userInputValue) {
+    let userInputWords = userInputValue.trim().split(/[\s,!.?]+/);
+    userInputWords = userInputWords.filter((word) => word.length > 0);
 
-    const lastCharacter = inputValue[inputValue.length - 1];
+    const lastCharacter = userInputValue[userInputValue.length - 1];
     const isEndOfWord = /[\s,!.?]/.test(lastCharacter);
-    console.log(inputWords, isEndOfWord);
 
     if (isEndOfWord) {
-      const lastWord = inputWords[inputWords.length - 1];
+      const lastWord = userInputWords[userInputWords.length - 1];
       if (lastWord.length > 3) saveWord(lastWord);
     }
   }
