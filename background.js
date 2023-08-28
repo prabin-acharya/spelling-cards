@@ -2,10 +2,6 @@ importScripts("typo.js");
 
 let dictionary = null;
 
-chrome.runtime.onInstalled.addListener(function () {
-  chrome.storage.local.set({ suggestionsCount: 1 });
-});
-
 // Load the dictionary data from the aff and dic files
 Promise.all([
   fetch(chrome.runtime.getURL("./dictionaries/en_US.aff")).then((response) =>
@@ -14,8 +10,16 @@ Promise.all([
   fetch(chrome.runtime.getURL("./dictionaries/en_US.dic")).then((response) =>
     response.text()
   ),
-]).then(([affData, dicData]) => {
-  dictionary = new Typo("en_US", affData, dicData);
+])
+  .then(([affData, dicData]) => {
+    dictionary = new Typo("en_US", affData, dicData);
+  })
+  .catch((error) => {
+    console.error("Failed to load dictionary:", error);
+  });
+
+chrome.runtime.onInstalled.addListener(function () {
+  chrome.storage.local.set({ suggestionsCount: 1 });
 });
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
