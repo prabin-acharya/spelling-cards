@@ -27,7 +27,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       let suggestions = dictionary
         .suggest(originalWord)
         .map((suggestion) => suggestion.toLowerCase())
-        .filter((suggestion) => suggestion !== originalWord);
+        .filter((suggestion) => suggestion !== originalWord)
+        .filter((word) => /^[a-zA-Z]+$/.test(word));
 
       if (suggestions.length > 0) {
         wordWithSuggestions =

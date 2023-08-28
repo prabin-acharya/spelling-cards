@@ -1,16 +1,16 @@
 let dictionary = new Typo("en_US");
 
 function saveWord(word) {
-  console.log("save", word, "******");
   chrome.storage.local.get("words", function (data) {
     let words = data.words || [];
 
+    // send the word to background for spell check
     chrome.runtime.sendMessage(
       { action: "checkSpelling", word: word },
       function (response) {
         word = response.word;
 
-        // save the word oif it's not already saved, "-" is because we are saving words as array of "word-suggestion1-suggestion2"
+        // save the word only if it's not already saved, "-" is because we are saving words as array of "word-suggestion1-suggestion2"
         if (word.includes("-") && !words.includes(word)) {
           words.push(word);
           chrome.storage.local.set({ words: words });
@@ -53,7 +53,6 @@ document.body.addEventListener("input", function (e) {
 
 // special case for google docs
 if (window.location.hostname == "docs.google.com") {
-  // Add an event listener to each iframe to track keydown events
   document.querySelectorAll("iframe").forEach((iframe, index) => {
     try {
       iframe.contentWindow.addEventListener("keyup", function (e) {
