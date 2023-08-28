@@ -1,6 +1,7 @@
 let dictionary = new Typo("en_US");
 
 function saveWord(word) {
+  console.log("save", word, "******");
   chrome.storage.local.get("words", function (data) {
     let words = data.words || [];
 
@@ -19,25 +20,31 @@ function saveWord(word) {
   });
 }
 
-document.body.addEventListener("keyup", function (e) {
-  const activeElement = document.activeElement;
+document.body.addEventListener("input", function (e) {
   let inputValue = null;
 
   if (
-    ["input", "textarea"].includes(activeElement.tagName.toLowerCase()) &&
-    !["password", "email", "number"].includes(activeElement.type)
+    (e.target.tagName === "INPUT" ||
+      e.target.tagName === "TEXTAREA" ||
+      e.target.isContentEditable) &&
+    !["password", "email", "number"].includes(e.target.type)
   ) {
-    inputValue = activeElement.value;
-  } else if (activeElement.isContentEditable) {
-    inputValue = activeElement.textContent;
+    if (e.target.isContentEditable) {
+      inputValue = e.target.innerText;
+    } else {
+      inputValue = e.target.value;
+    }
   }
 
   if (inputValue) {
-    if (inputValue.endsWith(" ") || inputValue.endsWith("\n")) {
-      // Save the last word when the user types a space or a new line
-      let inputWords = inputValue.trim().split(/[\s,!.?]+/);
-      inputWords = inputWords.filter((word) => word.length > 0);
+    let inputWords = inputValue.trim().split(/[\s,!.?]+/);
+    inputWords = inputWords.filter((word) => word.length > 0);
 
+    const lastCharacter = inputValue[inputValue.length - 1];
+    const isEndOfWord = /[\s,!.?]/.test(lastCharacter);
+    console.log(inputWords, isEndOfWord);
+
+    if (isEndOfWord) {
       const lastWord = inputWords[inputWords.length - 1];
       if (lastWord.length > 3) saveWord(lastWord);
     }
@@ -81,30 +88,4 @@ function trackWord(key) {
       saveWord(currentWord);
     }
   }
-}
-
-// track words typed by the user in contenteditable elements
-let observer = new MutationObserver(function (mutations) {
-  mutations.forEach(function (mutation) {
-    if (mutation.type === "characterData") {
-      let inputWords = mutation.target.textContent.trim().split(/[\s,!.?]+/);
-      inputWords = inputWords.filter((word) => word.length > 0);
-
-      const lastWord = inputWords[inputWords.length - 2];
-      if (lastWord?.length > 3) {
-        console.log("last word:", lastWord);
-        saveWord(lastWord);
-      }
-    }
-  });
-});
-
-if (window.location.hostname == "mail.google.com") {
-  const activeElement = document.activeElement;
-
-  observer.observe(activeElement, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-  });
 }
