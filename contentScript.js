@@ -1,6 +1,5 @@
-const dictionary = new Typo("en_US");
-
 let savedWords = [];
+
 chrome.storage.local.get("words", function (data) {
   savedWords = data.words || [];
 });
@@ -8,14 +7,12 @@ chrome.storage.local.get("words", function (data) {
 chrome.storage.onChanged.addListener(function (changes) {
   for (let key in changes) {
     if (key === "words") {
-      let storageChange = changes[key];
-      savedWords = storageChange.newValue || [];
+      savedWords = changes[key].newValue || [];
     }
   }
 });
 
 function saveWord(word) {
-  // send the word to background for spell check
   chrome.runtime.sendMessage(
     { action: "checkSpelling", word: word },
     function (response) {
@@ -28,17 +25,19 @@ function saveWord(word) {
       }
     }
   );
-  // });
 }
 
 document.body.addEventListener("input", function (e) {
+  if (["password", "email", "number"].includes(e.target.type)) {
+    return;
+  }
+
   let userInputValue = null;
 
   if (
-    (e.target.tagName === "INPUT" ||
-      e.target.tagName === "TEXTAREA" ||
-      e.target.isContentEditable) &&
-    !["password", "email", "number"].includes(e.target.type)
+    e.target.tagName === "INPUT" ||
+    e.target.tagName === "TEXTAREA" ||
+    e.target.isContentEditable
   ) {
     if (e.target.isContentEditable) {
       userInputValue = e.target.innerText;
@@ -48,15 +47,18 @@ document.body.addEventListener("input", function (e) {
   }
 
   if (userInputValue) {
-    let userInputWords = userInputValue.trim().split(/[\s,!.?]+/);
-    userInputWords = userInputWords.filter((word) => word.length > 0);
-
+    // check if the last character signifies the end of a word(blankspace, !, ?)
     const lastCharacter = userInputValue[userInputValue.length - 1];
     const isEndOfWord = /[\s,!.?]/.test(lastCharacter);
 
     if (isEndOfWord) {
-      const lastWord = userInputWords[userInputWords.length - 1];
-      if (lastWord.length > 3) saveWord(lastWord);
+      let words = userInputValue.trim().split(/[\s,!.?]+/);
+
+      const lastWord = words[words.length - 1];
+      // Check the validity of the last word and save if valid.
+      if (lastWord.length > 3 && /^[a-zA-Z]+$/.test(lastWord)) {
+        saveWord(lastWord);
+      }
     }
   }
 });
