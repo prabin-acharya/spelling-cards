@@ -12,7 +12,8 @@ chrome.storage.onChanged.addListener(function (changes) {
   }
 });
 
-function saveWord(word) {
+function checkWord(word) {
+  console.log("check", word)
   chrome.runtime.sendMessage(
     { action: "checkSpelling", word: word },
     function (response) {
@@ -20,6 +21,7 @@ function saveWord(word) {
 
       // save the word only if it's not already saved, "-" is because we are saving words as array of "word-suggestion1-suggestion2"
       if (word.includes("-") && !savedWords.includes(word)) {
+        console.log("save", word)
         savedWords.push(word);
         chrome.storage.local.set({ words: savedWords });
       }
@@ -57,11 +59,12 @@ document.body.addEventListener("input", function (e) {
       const lastWord = words[words.length - 1];
       // Check the validity of the last word and save if valid.
       if (lastWord.length > 3 && /^[a-zA-Z]+$/.test(lastWord)) {
-        saveWord(lastWord);
+        checkWord(lastWord);
       }
     }
   }
 });
+
 
 // special case for google docs
 if (window.location.hostname == "docs.google.com") {
@@ -96,7 +99,7 @@ function trackWord(key) {
 
   function saveCurrentWord() {
     if (currentWord.length > 3) {
-      saveWord(currentWord);
+      checkWord(currentWord);
     }
   }
 }
