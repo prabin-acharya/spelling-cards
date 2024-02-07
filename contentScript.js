@@ -13,7 +13,6 @@ chrome.storage.onChanged.addListener(function (changes) {
 });
 
 function checkWord(word) {
-  // console.log("check", word)
   chrome.runtime.sendMessage(
     { action: "checkSpelling", word: word },
     function (response) {
@@ -30,7 +29,6 @@ function checkWord(word) {
 }
 
 if (!(window.location.hostname == "docs.google.com" || window.location.hostname == "mail.google.com")) {
-
   document.body.addEventListener("input", function (e) {
     if (["password", "email", "number"].includes(e.target.type)) {
       return;
@@ -70,9 +68,10 @@ if (!(window.location.hostname == "docs.google.com" || window.location.hostname 
 }
 
 
+let currentWord = "";
+
 // special case for google docs
 if (window.location.hostname == "docs.google.com") {
-
   document.querySelectorAll("iframe").forEach((iframe, index) => {
     try {
       iframe.contentWindow.addEventListener("keyup", function (e) {
@@ -86,8 +85,6 @@ if (window.location.hostname == "docs.google.com") {
     }
   });
 }
-
-let currentWord = "";
 
 //  track words typed by the user in google docs(track each letters typed and save the word when the user types a space or a new line)
 function trackWord(key) {
